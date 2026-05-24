@@ -445,6 +445,12 @@ const getCurrentUser = (req: express.Request) => {
 // API ROUTES
 // ----------------------------------------------------
 
+// Heartbeat / health check endpoint to keep the server awake and responsive
+app.get("/api/health", (req, res) => {
+  console.log(`[HEARTBEAT] Ping received at ${new Date().toISOString()}`);
+  res.json({ status: "alive", time: new Date().toISOString(), mongooseConnected });
+});
+
 // Server Environment Config details for UI Banner styling
 app.get("/api/config-status", async (req, res) => {
   res.json({

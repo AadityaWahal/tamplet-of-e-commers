@@ -81,6 +81,27 @@ export default function App() {
     };
   }, []);
 
+  // Periodic Keep-Alive heartbeat pinger to prevent Render container from sleeping while open
+  useEffect(() => {
+    const keepServiceAlive = async () => {
+      try {
+        await fetch("/api/health");
+      } catch (error) {
+        // Silent catch for network hiccups
+        console.log("[HEARTBEAT] Minor transient network check skipped:", error);
+      }
+    };
+
+    // Run keep alive checks every 2 minutes (120,000 ms) while active tab is open
+    const initialWarmup = setTimeout(keepServiceAlive, 20000);
+    const daemonTimer = setInterval(keepServiceAlive, 120000);
+
+    return () => {
+      clearTimeout(initialWarmup);
+      clearInterval(daemonTimer);
+    };
+  }, []);
+
   const navigateTo = (path: string) => {
     window.history.pushState({}, "", path);
     setCurrentPath(path);

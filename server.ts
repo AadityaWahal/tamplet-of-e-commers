@@ -37,19 +37,62 @@ const MONGODB_URI = process.env.MONGODB_URI;
 let mongooseConnected = false;
 let mongoError: string | null = null;
 
-// Attempt MongoDB Connection if MONGODB_URI is provided
-if (MONGODB_URI) {
-  mongoose.connect(MONGODB_URI)
-    .then(() => {
-      console.log("Connected to MongoDB successfully.");
-      mongooseConnected = true;
-      mongoError = null;
-      seedProductsIfEmpty();
-    })
-    .catch((err) => {
-      console.error("MongoDB connection failed:", err.message);
-      mongoError = err.message;
+// Clean, non-blocking connection function
+async function ensureDbConnected(): Promise<boolean> {
+  if (!MONGODB_URI) {
+    return false;
+  }
+
+  const state = mongoose.connection.readyState;
+  if (state === 1) {
+    // Fully connected
+    return true;
+  }
+
+  if (state === 2) {
+    // Connection in progress, wait for it
+    console.log("[DATABASE] Connection is currently establishing, waiting...");
+    let retries = 0;
+    while (mongoose.connection.readyState === 2 && retries < 25) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      retries++;
+    }
+    return mongoose.connection.readyState === 1;
+  }
+
+  // Disconnected (0) or disconnecting (3). Establish a fresh connection.
+  try {
+    console.log("[DATABASE] Establishing new MongoDB connection...");
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 8000
     });
+    console.log("[DATABASE] Connected to MongoDB successfully.");
+    await seedProductsIfEmpty();
+    return true;
+  } catch (err: any) {
+    console.error("[DATABASE] MongoDB connection connection failed:", err.message);
+    mongoError = err.message;
+    return false;
+  }
+}
+
+// Request-level database synchronization middleware
+app.use(async (req, res, next) => {
+  if (MONGODB_URI) {
+    mongooseConnected = await ensureDbConnected();
+  } else {
+    mongooseConnected = false;
+  }
+  next();
+});
+
+// Fire off the connection in the background immediately on startup
+if (MONGODB_URI) {
+  ensureDbConnected().then((connected) => {
+    mongooseConnected = connected;
+  }).catch((err) => {
+    console.error("[DATABASE] Background connection thread error:", err);
+  });
 } else {
   console.log("No MONGODB_URI configured. Running in high-fidelity 'Demo Mode' with in-memory database storage.");
 }
@@ -404,28 +447,6 @@ const getCurrentUser = (req: express.Request) => {
 
 // Server Environment Config details for UI Banner styling
 app.get("/api/config-status", async (req, res) => {
-  // If we have MONGODB_URI and are not connected, try connecting again!
-  if (process.env.MONGODB_URI && !mongooseConnected) {
-    try {
-      console.log("Retrying MongoDB connection dynamically...");
-      // Disconnect first to ensure a clean state
-      if (mongoose.connection.readyState !== 0) {
-        await mongoose.disconnect();
-      }
-      await mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000 // fail fast so the endpoint doesn't hang indefinitely
-      });
-      mongooseConnected = true;
-      mongoError = null;
-      console.log("MongoDB connection success on dynamic retry!");
-      await seedProductsIfEmpty();
-    } catch (err: any) {
-      console.error("MongoDB reconnection retry failed:", err.message);
-      mongooseConnected = false;
-      mongoError = err.message;
-    }
-  }
-
   res.json({
     mongooseConnected,
     mongoError,

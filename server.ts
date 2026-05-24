@@ -14,8 +14,11 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-// Ensure uploads folder exists in workspace
-const uploadsDir = path.join(process.cwd(), "uploads");
+// Ensure uploads folder exists in workspace (use /tmp/uploads on Vercel to avoid Read-Only system crashes)
+const uploadsDir = process.env.VERCEL
+  ? "/tmp/uploads"
+  : path.join(process.cwd(), "uploads");
+
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }

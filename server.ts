@@ -26,6 +26,12 @@ app.use("/uploads", express.static(uploadsDir));
 app.use(express.json({ limit: "15mb" }));
 app.use(cookieParser());
 
+// Incoming request logging and path normalization middleware for serverless routing environments
+app.use((req, res, next) => {
+  console.log(`[REQUEST] ${req.method} ${req.url} (originalUrl: ${req.originalUrl || req.url})`);
+  next();
+});
+
 // Database Connection & Configuration
 const MONGODB_URI = process.env.MONGODB_URI;
 let mongooseConnected = false;

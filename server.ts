@@ -1578,6 +1578,53 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   res.status(200).send(robotsContent);
 });
 
+// ----------------------------------------------------
+// Render Keep-Alive / Heartbeat Daemon to prevent sleep
+// ----------------------------------------------------
+let capturedPublicUrl: string | null = null;
+let selfPingIntervalStarted = false;
+
+function startSelfPingDaemon(url: string) {
+  if (selfPingIntervalStarted) return;
+  selfPingIntervalStarted = true;
+  console.log(`[SELF-PING] Render Keep-Alive daemon energized! Target URL: ${url}`);
+
+  // Immediate ping check
+  fetch(`${url}/api/health?self_ping=bootstrap`)
+    .then((res) => console.log(`[SELF-PING] Initialization check sent to ${url} (Status: ${res.status})`))
+    .catch((err) => console.warn(`[SELF-PING] Initial handshake error (expected if server warming up):`, err.message));
+
+  // Run every 25 seconds to beat Render's activity timeout window
+  setInterval(async () => {
+    try {
+      const pingUrl = `${url}/api/health?self_ping=${Date.now()}`;
+      const res = await fetch(pingUrl, {
+        headers: {
+          "User-Agent": "AuraKeepAliveDaemon/2.0",
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
+        }
+      });
+      console.log(`[SELF-PING] Keep-alive request completed. Status: ${res.status}`);
+    } catch (err: any) {
+      console.warn(`[SELF-PING] Keep-alive request failed: ${err.message}`);
+    }
+  }, 25000);
+}
+
+// Global middleware to capture external production domain dynamically on first user access
+app.use((req, res, next) => {
+  if (!capturedPublicUrl) {
+    const host = req.get("host");
+    if (host && !host.includes("localhost") && !host.includes("127.0.0.1") && !host.includes("0.0.0.0")) {
+      const protocol = req.headers["x-forwarded-proto"] || (req.secure ? "https" : "http");
+      capturedPublicUrl = `${protocol}://${host}`;
+      startSelfPingDaemon(capturedPublicUrl);
+    }
+  }
+  next();
+});
+
 // Serve frontend application static site compiled files
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -1598,6 +1645,12 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`[SYSTEM RUNTIME] Aura Candle Express server fully energized on http://localhost:${PORT}`);
+
+    // If Render automatically exposes the external URL as an environment variable, use it right away!
+    if (process.env.RENDER_EXTERNAL_URL) {
+      capturedPublicUrl = process.env.RENDER_EXTERNAL_URL;
+      startSelfPingDaemon(capturedPublicUrl);
+    }
   });
 }
 

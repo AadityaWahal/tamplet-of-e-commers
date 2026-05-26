@@ -30,10 +30,21 @@ export default function App() {
       if (loadedCartForUser !== user.email) {
         setCart(user.cart || []);
         setLoadedCartForUser(user.email);
+        // Clear guest cart when logging in to separate boundaries
+        sessionStorage.removeItem("aura_guest_cart");
       }
     } else {
-      // Guest cart starts completely clean upon reload
-      setCart([]);
+      // Guest cart is temporary. Try to retrieve from tab sessionStorage or fallback to empty
+      try {
+        const tempCart = sessionStorage.getItem("aura_guest_cart");
+        if (tempCart) {
+          setCart(JSON.parse(tempCart));
+        } else {
+          setCart([]);
+        }
+      } catch (e) {
+        setCart([]);
+      }
       setLoadedCartForUser(null);
     }
   }, [user]);
@@ -41,15 +52,24 @@ export default function App() {
   // Save cart back to database on updates
   useEffect(() => {
     const persistCart = async () => {
-      if (user && loadedCartForUser === user.email) {
+      if (user) {
+        if (loadedCartForUser === user.email) {
+          try {
+            await fetch("/api/auth/cart", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ cart })
+            });
+          } catch (err) {
+            console.error("Failed to persist user cart state to database:", err);
+          }
+        }
+      } else {
+        // Guest mode: save temporary cart securely in browser tab's sessionStorage
         try {
-          await fetch("/api/auth/cart", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ cart })
-          });
-        } catch (err) {
-          console.error("Failed to persist user cart state to database:", err);
+          sessionStorage.setItem("aura_guest_cart", JSON.stringify(cart));
+        } catch (e) {
+          console.error("Failed to save guest cart state in sessionStorage:", e);
         }
       }
     };
@@ -172,7 +192,10 @@ export default function App() {
       const res = await fetch("/api/auth/logout", { method: "POST" });
       if (res.ok) {
         localStorage.removeItem("aura_jwt_token");
+        sessionStorage.removeItem("aura_guest_cart");
         setUser(null);
+        setCart([]);
+        setLoadedCartForUser(null);
         navigateTo("/");
       }
     } catch (err) {

@@ -1523,6 +1523,61 @@ app.put("/api/admin/orders/:id/remark", verifyAdmin, async (req, res) => {
   }
 });
 
+// Sitemap dynamic generator endpoint for search engines and SEO
+app.get("/sitemap.xml", (req, res) => {
+  const host = req.get("host") || "localhost:3000";
+  const protocol = req.headers["x-forwarded-proto"] || (req.secure ? "https" : "http");
+  const baseUrl = `${protocol}://${host}`;
+  const currentIsoDate = new Date().toISOString().split("T")[0];
+
+  const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${currentIsoDate}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/login</loc>
+    <lastmod>${currentIsoDate}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/cart</loc>
+    <lastmod>${currentIsoDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/my-orders</loc>
+    <lastmod>${currentIsoDate}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>`;
+
+  res.header("Content-Type", "application/xml");
+  res.status(200).send(xmlContent);
+});
+
+// robots.txt configuration to link to the XML sitemap and configure crawling parameters
+app.get("/robots.txt", (req, res) => {
+  const host = req.get("host") || "localhost:3000";
+  const protocol = req.headers["x-forwarded-proto"] || (req.secure ? "https" : "http");
+  const baseUrl = `${protocol}://${host}`;
+
+  const robotsContent = `User-agent: *
+Allow: /
+Disallow: /admin/dashboard
+
+Sitemap: ${baseUrl}/sitemap.xml`;
+
+  res.header("Content-Type", "text/plain");
+  res.status(200).send(robotsContent);
+});
+
 // Serve frontend application static site compiled files
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

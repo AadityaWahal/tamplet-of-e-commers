@@ -85,20 +85,36 @@ export default function App() {
   useEffect(() => {
     const keepServiceAlive = async () => {
       try {
-        await fetch("/api/health");
+        // Cache-busting parameter and anti-caching headers prevent browser custom edge proxies or disk caching from bypassing the dynamic request
+        await fetch(`/api/health?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+          }
+        });
       } catch (error) {
         // Silent catch for network hiccups
         console.log("[HEARTBEAT] Minor transient network check skipped:", error);
       }
     };
 
-    // Run keep alive checks every 2 minutes (120,000 ms) while active tab is open
-    const initialWarmup = setTimeout(keepServiceAlive, 20000);
-    const daemonTimer = setInterval(keepServiceAlive, 120000);
+    // Run keep alive checks every 25 seconds (25000 ms) while active tab is open
+    const initialWarmup = setTimeout(keepServiceAlive, 5000);
+    const daemonTimer = setInterval(keepServiceAlive, 25000);
+
+    // Immediately trigger warm-up ping when user returns to/switches to the tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        keepServiceAlive();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       clearTimeout(initialWarmup);
       clearInterval(daemonTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 

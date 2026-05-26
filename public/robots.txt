@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/dashboard
+
+# Dynamic or static fallback location of the sitemap
+Sitemap: /sitemap.xml

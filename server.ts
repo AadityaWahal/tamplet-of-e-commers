@@ -567,7 +567,17 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(201).json({
         success: true,
         token: token,
-        user: { id: newUser._id, email: newUser.email, role: newUser.role }
+        user: { 
+          id: newUser._id.toString(), 
+          _id: newUser._id.toString(), 
+          email: newUser.email, 
+          role: newUser.role,
+          address: newUser.address || "",
+          pinCode: newUser.pinCode || "",
+          phone: newUser.phone || "",
+          appliedCouponCode: newUser.appliedCouponCode || "",
+          cart: newUser.cart || []
+        }
       });
     } else {
       // Memory persistence
@@ -578,11 +588,16 @@ app.post("/api/auth/register", async (req, res) => {
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const newMemUser = {
+      const newMemUser: any = {
         _id: "user_" + Math.random().toString(36).substr(2, 9),
         email: email,
         passwordHash,
-        role: assignedRole
+        role: assignedRole,
+        address: "",
+        pinCode: "",
+        phone: "",
+        appliedCouponCode: "",
+        cart: []
       };
 
       memoryUsers.push(newMemUser);
@@ -603,7 +618,17 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(201).json({
         success: true,
         token: token,
-        user: { id: newMemUser._id, email: newMemUser.email, role: newMemUser.role }
+        user: { 
+          id: newMemUser._id, 
+          _id: newMemUser._id, 
+          email: newMemUser.email, 
+          role: newMemUser.role,
+          address: "",
+          pinCode: "",
+          phone: "",
+          appliedCouponCode: "",
+          cart: []
+        }
       });
     }
   } catch (err: any) {
@@ -647,7 +672,17 @@ app.post("/api/auth/login", async (req, res) => {
       return res.json({
         success: true,
         token: token,
-        user: { id: user._id, email: user.email, role: user.role }
+        user: { 
+          id: user._id.toString(), 
+          _id: user._id.toString(), 
+          email: user.email, 
+          role: user.role,
+          address: user.address || "",
+          pinCode: user.pinCode || "",
+          phone: user.phone || "",
+          appliedCouponCode: user.appliedCouponCode || "",
+          cart: user.cart || []
+        }
       });
     } else {
       // Memory check
@@ -678,7 +713,17 @@ app.post("/api/auth/login", async (req, res) => {
       return res.json({
         success: true,
         token: token,
-        user: { id: user._id, email: user.email, role: user.role }
+        user: { 
+          id: user._id, 
+          _id: user._id, 
+          email: user.email, 
+          role: user.role,
+          address: user.address || "",
+          pinCode: user.pinCode || "",
+          phone: user.phone || "",
+          appliedCouponCode: user.appliedCouponCode || "",
+          cart: user.cart || []
+        }
       });
     }
   } catch (err: any) {

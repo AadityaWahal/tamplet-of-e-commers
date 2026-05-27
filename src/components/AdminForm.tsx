@@ -127,28 +127,10 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
       try {
         const base64Data = reader.result as string;
 
-        // Erase older uploaded logo from server before writing new one and replacing it
-        if (logoUrlInput && logoUrlInput.startsWith("/uploads/")) {
-          await fetch("/api/admin/delete-file", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: logoUrlInput })
-          });
-        }
-
-        const res = await fetch("/api/admin/upload-file", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ base64Data, prefix: "logo" })
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Logo disk upload failed.");
-        }
-
-        setLogoUrlInput(data.url);
+        setLogoUrlInput(base64Data);
+        localStorage.setItem("aura_logo_storage", base64Data);
         setSuccessMsg("Brand logo file uploaded and stored on site successfully.");
-        await handleSaveStoreConfigImmediate(siteNameInput, data.url, bannersList);
+        await handleSaveStoreConfigImmediate(siteNameInput, base64Data, bannersList);
       } catch (err: any) {
         setErrorMsg("Failed to upload store logo file: " + err.message);
       } finally {
@@ -173,6 +155,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
         });
       }
       setLogoUrlInput("");
+      localStorage.removeItem("aura_logo_storage");
       setSuccessMsg("Store logo removed and erased from site storage.");
       await handleSaveStoreConfigImmediate(siteNameInput, "", bannersList);
     } catch (err: any) {

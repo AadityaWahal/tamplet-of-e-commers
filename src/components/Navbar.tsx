@@ -18,7 +18,7 @@ interface NavbarProps {
 
 export default function Navbar({ user, currentPath, onNavigate, onLogout, cartCount, storeConfig }: NavbarProps) {
   const siteName = storeConfig?.siteName || "Enlight Candles";
-  const logoUrl = storeConfig?.logoUrl || "";
+  const logoUrl = storeConfig?.logoUrl || localStorage.getItem("aura_logo_storage") || "/uploads/logo_1779874885414.png";
 
   return (
     <header className="sticky top-4 mx-4 xl:mx-auto max-w-7xl bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm rounded-2xl z-40 transition-all duration-300" id="navbar-header">

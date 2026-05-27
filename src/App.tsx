@@ -27,10 +27,47 @@ export default function App() {
   // Retrieve user session or initialize empty cart
   useEffect(() => {
     if (user) {
-      // If user profile is loaded, prioritize their database cart
+      // If user profile is loaded, prioritize their database cart merged with temporary guest cart if present
       if (loadedCartForUser !== user.email) {
-        setCart(user.cart || []);
+        let guestCart: CartItem[] = [];
+        try {
+          const tempCart = sessionStorage.getItem("aura_guest_cart");
+          if (tempCart) {
+            guestCart = JSON.parse(tempCart);
+          }
+        } catch (e) {
+          console.warn("Could not retrieve guest cart for merging.", e);
+        }
+
+        const dbCart: CartItem[] = user.cart || [];
+        const mergedCart = [...dbCart];
+
+        for (const guestItem of guestCart) {
+          const existingIdx = mergedCart.findIndex(item => item.product._id === guestItem.product._id);
+          if (existingIdx > -1) {
+            mergedCart[existingIdx].quantity += guestItem.quantity;
+          } else {
+            mergedCart.push(guestItem);
+          }
+        }
+
+        setCart(mergedCart);
         setLoadedCartForUser(user.email);
+        
+        // Persist the merged cart to the server with their user identity immediately
+        const pushMergedCart = async () => {
+          try {
+            await fetch("/api/auth/cart", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ cart: mergedCart })
+            });
+          } catch (err) {
+            console.error("Failed to persist merged cart on fresh login:", err);
+          }
+        };
+        pushMergedCart();
+
         // Clear guest cart when logging in to separate boundaries
         sessionStorage.removeItem("aura_guest_cart");
       }
@@ -48,7 +85,7 @@ export default function App() {
       }
       setLoadedCartForUser(null);
     }
-  }, [user]);
+  }, [user, loadedCartForUser]);
 
   // Save cart back to database on updates
   useEffect(() => {
@@ -151,6 +188,11 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setStoreConfig(data);
+        if (data && data.logoUrl) {
+          localStorage.setItem("aura_logo_storage", data.logoUrl);
+        } else {
+          localStorage.removeItem("aura_logo_storage");
+        }
       }
     } catch (err) {
       console.warn("Unable to fetch dynamic storefront config.");

@@ -1,6 +1,6 @@
 {
-  "name": "Aura Candles",
-  "description": "A premium e-commerce platform for hand-crafted organic soy candles, complete with Admin roles, product catalogs, and Razorpay safe checkout integration.",
+  "name": "Enlight Candles",
+  "description": "Where fragrance meets luxury. A premium e-commerce platform for hand-crafted artisanal soy candles.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

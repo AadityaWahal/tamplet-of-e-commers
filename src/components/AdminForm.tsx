@@ -16,6 +16,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
   const [price, setPrice] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [stock, setStock] = useState("10");
+  const [shippingCost, setShippingCost] = useState("");
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,16 +33,20 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
   const [activeTab, setActiveTab] = useState<"products" | "orders" | "coupons" | "categories" | "customize">("products");
 
   // Store Custom Configuration states
-  const [siteNameInput, setSiteNameInput] = useState(storeConfig?.siteName || "Aura");
+  const [siteNameInput, setSiteNameInput] = useState(storeConfig?.siteName || "Enlight Candles");
   const [logoUrlInput, setLogoUrlInput] = useState(storeConfig?.logoUrl || "");
+  const [supportPhoneInput, setSupportPhoneInput] = useState(storeConfig?.supportPhone || "+91 98765 43210");
   const [newBannerInput, setNewBannerInput] = useState("");
   const [bannersList, setBannersList] = useState<string[]>(storeConfig?.banners || []);
   const [savingConfig, setSavingConfig] = useState(false);
 
   useEffect(() => {
     if (storeConfig) {
-      setSiteNameInput(storeConfig.siteName || "Aura");
+      setSiteNameInput(storeConfig.siteName || "Enlight Candles");
       setLogoUrlInput(storeConfig.logoUrl || "");
+      if (storeConfig.supportPhone) {
+        setSupportPhoneInput(storeConfig.supportPhone);
+      }
       setBannersList(storeConfig.banners || []);
     }
   }, [storeConfig]);
@@ -54,7 +59,8 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
         body: JSON.stringify({
           siteName: name,
           logoUrl: logo,
-          banners: banners
+          banners: banners,
+          supportPhone: supportPhoneInput
         })
       });
       const data = await res.json();
@@ -84,7 +90,8 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
         body: JSON.stringify({
           siteName: siteNameInput,
           logoUrl: logoUrlInput,
-          banners: targetBanners
+          banners: targetBanners,
+          supportPhone: supportPhoneInput
         })
       });
       const data = await res.json();
@@ -361,6 +368,25 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
     }
   };
 
+  const handleDeleteCoupon = async (id: string, code: string) => {
+    if (!window.confirm(`Are you sure you want to delete the promo code "${code}"?`)) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/admin/coupons/${id}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete coupon.");
+      }
+      setSuccessMsg(`Promo code "${code}" has been deleted.`);
+      fetchCoupons();
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    }
+  };
+
   const fetchDeliveryCharge = async () => {
     try {
       const res = await fetch("/api/delivery-config");
@@ -551,7 +577,8 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
           price: priceNum,
           imageUrl,
           stock: stockNum,
-          category: category || ""
+          category: category || "",
+          shippingCost: Number(shippingCost || "0")
         })
       });
 
@@ -582,6 +609,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
     setImageUrl(p.imageUrl);
     setStock(p.stock.toString());
     setCategory((p as any).category || "");
+    setShippingCost(p.shippingCost !== undefined ? p.shippingCost.toString() : "0");
     setErrorMsg(null);
     setSuccessMsg(null);
   };
@@ -594,6 +622,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
     setImageUrl("");
     setStock("10");
     setCategory("");
+    setShippingCost("");
   };
 
   const handleDelete = async (productId: string, titleName: string) => {
@@ -816,7 +845,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3" id="admin-metrics-fields">
+                    <div className="grid grid-cols-3 gap-3" id="admin-metrics-fields">
                       <div>
                         <label className="block text-[10px] font-mono uppercase text-stone-500 tracking-wider mb-1">
                           Price *
@@ -844,6 +873,21 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                           onChange={(e) => setStock(e.target.value)}
                           className="w-full bg-stone-50 border border-stone-200 focus:outline-none focus:ring-1 focus:ring-stone-400 focus:border-stone-500 text-xs text-stone-900 rounded-lg py-2 px-3 font-mono"
                           id="field-candle-stock"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-stone-500 tracking-wider mb-1" title="Individual shipping cost multiplied per quantity in order">
+                          Unit Shipping
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={shippingCost}
+                          onChange={(e) => setShippingCost(e.target.value)}
+                          className="w-full bg-stone-50 border border-stone-200 focus:outline-none focus:ring-1 focus:ring-stone-400 focus:border-stone-500 text-xs text-stone-900 rounded-lg py-2 px-3 font-mono"
+                          placeholder="₹"
+                          id="field-candle-shipping"
+                          title="Shipping cost per item (will multiply dynamically on checkout)"
                         />
                       </div>
                     </div>
@@ -940,6 +984,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                             <th className="px-3 py-2.5 rounded-l-lg">Scent name</th>
                             <th className="px-3 py-2.5">Category</th>
                             <th className="px-3 py-2.5">Price</th>
+                            <th className="px-3 py-2.5">Unit Shipping</th>
                             <th className="px-3 py-2.5">Stock</th>
                             <th className="px-3 py-2.5 rounded-r-lg">Manage</th>
                           </tr>
@@ -964,6 +1009,9 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                               </td>
                               <td className="px-3 py-2 font-mono font-bold text-stone-900">
                                 ₹{p.price.toLocaleString("en-IN")}
+                              </td>
+                              <td className="px-3 py-2 font-mono text-stone-500 font-medium">
+                                ₹{(p.shippingCost || 0).toLocaleString("en-IN")}
                               </td>
                               <td className="px-3 py-2">
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
@@ -1104,6 +1152,11 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                                     {ord.items.map((it: any, i: number) => (
                                       <div key={i} className="text-[10px] leading-relaxed font-sans truncate">
                                         • {it.title} <span className="font-mono text-stone-500 font-bold">x{it.quantity}</span>
+                                        {it.shippingCost !== undefined && it.shippingCost > 0 && (
+                                          <span className="text-[9px] font-mono text-stone-450 text-stone-400 ml-1 bg-stone-100 px-1 rounded">
+                                            sh: ₹{it.shippingCost * it.quantity}
+                                          </span>
+                                        )}
                                       </div>
                                     ))}
                                   </div>
@@ -1111,6 +1164,12 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                                 <td className="py-3 px-3 text-stone-600 text-[10px] leading-relaxed max-w-xs">
                                   <p className="font-semibold text-stone-850 truncate">{ord.address}</p>
                                   <p className="text-[9px] text-stone-400 font-mono mt-0.5">PIN: {ord.pinCode} | Tel: {ord.phone}</p>
+                                  {ord.customerInstructions && (
+                                    <div className="mt-1 text-[10px] text-amber-900 bg-amber-50 border border-amber-250 rounded px-1.5 py-0.5 break-words max-w-xs font-serif leading-tight">
+                                      <span className="font-bold font-sans text-[8px] uppercase tracking-wider text-amber-800 block mb-0.5">Customer Instructions:</span>
+                                      {ord.customerInstructions}
+                                    </div>
+                                  )}
                                 </td>
                                 <td className="py-3 px-3 text-center">
                                   <select
@@ -1123,6 +1182,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                                     <option value="Confirmed">Confirmed</option>
                                     <option value="Shipped">Shipped</option>
                                     <option value="Delivered">Delivered</option>
+                                    <option value="Failed">Failed</option>
                                   </select>
                                 </td>
                                 <td className="py-3 px-3 text-right font-mono font-bold text-amber-950 text-[11px]">
@@ -1230,12 +1290,13 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                           <tr>
                             <th className="py-2.5 px-3 rounded-l-lg">Promo Code Name</th>
                             <th className="py-2.5 px-3">Marked Percent Discount</th>
-                            <th className="py-2.5 px-3 rounded-r-lg">Applies For Surcharges</th>
+                            <th className="py-2.5 px-3">Applies For Surcharges</th>
+                            <th className="py-2.5 px-3 rounded-r-lg text-right">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-stone-100 text-xs font-mono text-stone-600">
                           {coupons.map((c, i) => (
-                            <tr key={i} className="hover:bg-stone-50/40 transition-colors">
+                            <tr key={c._id || i} className="hover:bg-stone-50/40 transition-colors">
                               <td className="py-3 px-3">
                                 <span className="bg-amber-100 text-amber-950 px-2 py-0.5 rounded font-mono font-bold">{c.code}</span>
                               </td>
@@ -1248,6 +1309,16 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                                 ) : (
                                   <span className="text-stone-400">No (Delivery surcharge applies)</span>
                                 )}
+                              </td>
+                              <td className="py-3 px-3 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCoupon(c._id, c.code)}
+                                  className="text-stone-400 hover:text-red-600 p-1 rounded-lg hover:bg-red-50 transition-colors inline-flex items-center justify-center"
+                                  title={`Delete coupon code ${c.code}`}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -1358,9 +1429,24 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                           value={siteNameInput}
                           onChange={(e) => setSiteNameInput(e.target.value)}
                           className="w-full bg-stone-50 border border-stone-200 focus:outline-none focus:ring-1 focus:ring-stone-400 focus:border-stone-500 text-xs text-stone-900 rounded-lg py-2 px-3 placeholder:text-stone-400 transition-colors"
-                          placeholder="e.g. Aura, L'or, Lumina"
+                          placeholder="e.g. Enlight Candles, L'or, Lumina"
                         />
                         <p className="text-[10px] text-stone-400 mt-1">This dynamically replaces all occurrences of brand headers and footer copyright notices.</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-mono uppercase text-stone-500 tracking-wider mb-1">
+                          Customer Support Number *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={supportPhoneInput}
+                          onChange={(e) => setSupportPhoneInput(e.target.value)}
+                          className="w-full bg-stone-50 border border-stone-200 focus:outline-none focus:ring-1 focus:ring-stone-400 focus:border-stone-500 text-xs text-stone-900 rounded-lg py-2 px-3 placeholder:text-stone-400 transition-colors"
+                          placeholder="e.g. +91 98765 43210"
+                        />
+                        <p className="text-[10px] text-stone-400 mt-1">Used for customer helpline links and fallback iOS dialer triggers when an order fails.</p>
                       </div>
 
                       <div className="space-y-3">
@@ -1523,7 +1609,7 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                             src={logoUrlInput}
                             referrerPolicy="no-referrer; same-origin"
                             alt="Logo preview"
-                            className="h-10 w-auto object-contain rounded border border-stone-100 p-0.5 max-w-[80px] sm:max-w-[120px] shrink-0"
+                            className="h-10 w-10 object-cover rounded-full border border-stone-200/60 p-0.5 shrink-0"
                             onError={(e) => {
                               (e.target as any).src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200";
                             }}
@@ -1533,8 +1619,8 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
                             <PlusCircle className="w-5 h-5" />
                           </div>
                         )}
-                        <span className="font-serif text-sm sm:text-base tracking-widest text-stone-900 font-bold uppercase truncate max-w-[120px] sm:max-w-[180px]" title={siteNameInput || "AURA"}>
-                          {siteNameInput || "AURA"}
+                        <span className="font-serif text-sm sm:text-base tracking-widest text-stone-900 font-bold uppercase truncate max-w-[120px] sm:max-w-[180px]" title={siteNameInput || "Enlight Candles"}>
+                          {siteNameInput || "Enlight Candles"}
                         </span>
                       </div>
                     </div>

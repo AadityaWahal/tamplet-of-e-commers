@@ -6,9 +6,10 @@ import { motion } from "motion/react";
 interface MyOrdersViewProps {
   user: User | null;
   onNavigate: (path: string) => void;
+  storeConfig?: any;
 }
 
-export default function MyOrdersView({ user, onNavigate }: MyOrdersViewProps) {
+export default function MyOrdersView({ user, onNavigate, storeConfig }: MyOrdersViewProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -155,12 +156,19 @@ export default function MyOrdersView({ user, onNavigate }: MyOrdersViewProps) {
                     <p className="text-[9px] uppercase font-mono tracking-widest text-stone-400 font-bold">Scent formulation array</p>
                     <div className="space-y-2">
                       {val.items.map((it, i) => (
-                        <div key={i} className="flex justify-between text-xs text-stone-800 font-medium">
-                          <span className="flex items-center space-x-2">
-                            <span className="w-1.5 h-1.5 bg-amber-700 rounded-full"></span>
-                            <span>{it.title} <span className="font-mono text-stone-400">x{it.quantity}</span></span>
-                          </span>
-                          <span className="font-mono text-stone-900 font-semibold">₹{(it.price * it.quantity).toLocaleString("en-IN")}</span>
+                        <div key={i} className="space-y-0.5 border-b border-stone-100/30 pb-1.5 last:border-0 last:pb-0">
+                          <div className="flex justify-between text-xs text-stone-850 font-medium">
+                            <span className="flex items-center space-x-2">
+                              <span className="w-1.5 h-1.5 bg-amber-750 bg-amber-700 rounded-full"></span>
+                              <span>{it.title} <span className="font-mono text-stone-400 font-normal text-[11px]">x{it.quantity}</span></span>
+                            </span>
+                            <span className="font-mono text-stone-900 font-semibold">₹{(it.price * it.quantity).toLocaleString("en-IN")}</span>
+                          </div>
+                          {it.shippingCost !== undefined && it.shippingCost > 0 && (
+                            <p className="text-[10px] font-mono text-stone-450 text-stone-500 pl-3.5 italic">
+                              + Shipping: ₹{it.shippingCost.toLocaleString("en-IN")} x{it.quantity} = ₹{(it.shippingCost * it.quantity).toLocaleString("en-IN")}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -193,6 +201,13 @@ export default function MyOrdersView({ user, onNavigate }: MyOrdersViewProps) {
                         <Phone className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                         <span>Contact Direct: <strong className="font-mono text-stone-800">{val.phone}</strong></span>
                       </div>
+
+                      {val.customerInstructions && (
+                        <div className="border-t border-stone-100 pt-2 text-[11px] text-amber-900 bg-amber-55/40 bg-amber-50 p-2 rounded-lg leading-tight font-serif mt-1">
+                          <span className="font-sans font-bold uppercase text-[8px] text-amber-800 tracking-wider block mb-0.5">Your Instructions:</span>
+                          {val.customerInstructions}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -205,17 +220,19 @@ export default function MyOrdersView({ user, onNavigate }: MyOrdersViewProps) {
                       <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
                         val.remark === "Delivered" ? "bg-emerald-400" :
                         val.remark === "Shipped" ? "bg-blue-400" :
-                        val.remark === "Confirmed" ? "bg-amber-400" : "bg-stone-400"
+                        val.remark === "Confirmed" ? "bg-amber-400" :
+                        val.remark === "Failed" ? "bg-rose-450 bg-red-400" : "bg-stone-400"
                       }`}></span>
                       <span className={`relative inline-flex rounded-full h-3 w-3 ${
                         val.remark === "Delivered" ? "bg-emerald-500" :
                         val.remark === "Shipped" ? "bg-blue-500" :
-                        val.remark === "Confirmed" ? "bg-amber-500" : "bg-stone-500"
+                        val.remark === "Confirmed" ? "bg-amber-500" :
+                        val.remark === "Failed" ? "bg-rose-550 bg-red-500" : "bg-stone-500"
                       }`}></span>
                     </span>
                     <div>
                       <span className="text-[10px] uppercase font-mono tracking-widest text-stone-400 block font-bold">Atelier Remarks Status</span>
-                      <span className="text-xs font-serif font-black text-stone-800">
+                      <span className={`text-xs font-serif font-black ${val.remark === "Failed" ? "text-red-700" : "text-stone-800"}`}>
                         {val.remark || "Yet to Confirm"}
                       </span>
                     </div>
@@ -225,8 +242,28 @@ export default function MyOrdersView({ user, onNavigate }: MyOrdersViewProps) {
                     {val.remark === "Confirmed" ? "✨ Approved! Our candle alchemists have verified payment details and started hand-pouring designs." : ""}
                     {val.remark === "Shipped" ? "🚚 Out for Delivery! Our premium soy wax product package has been boxed and dispatched to your address." : ""}
                     {val.remark === "Delivered" ? "🌿 Poured and Delivered! We hope our hand-selected soy candles light up and soothe your home atmosphere." : ""}
+                    {val.remark === "Failed" ? "⚠️ Order Failed. Tap resolve issues call option below to contact our concierge support helpdesk immediately." : ""}
                   </p>
                 </div>
+
+                {val.remark === "Failed" && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <p className="font-serif font-bold text-red-900 text-sm flex items-center space-x-1.5">
+                        <span>⚠️ Order Processing Discrepancy Found</span>
+                      </p>
+                      <p className="text-xs text-red-700 leading-relaxed mt-1 max-w-xl">
+                        There was a discrepancy with your card payment authorization or coupon balance. Tap call concierge to connect with our live helpline desk directly to restore your order checkouts.
+                      </p>
+                    </div>
+                    <a
+                      href={`tel:${storeConfig?.supportPhone || "+919876543210"}`}
+                      className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-sans font-bold text-xs rounded-xl shadow transition-colors shrink-0 select-none uppercase tracking-wider text-center"
+                    >
+                      <span>📞 Call Concierge Support</span>
+                    </a>
+                  </div>
+                )}
 
               </motion.article>
             );

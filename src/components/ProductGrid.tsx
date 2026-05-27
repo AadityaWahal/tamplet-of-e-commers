@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Product, User } from "../types";
 import { ShoppingBag, Flame, Sparkles, Check, AlertCircle, ShieldAlert, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import EnlightLogo from "./EnlightLogo";
 
 interface ProductGridProps {
   user: User | null;
@@ -93,6 +94,16 @@ export default function ProductGrid({ user, onNavigate, onAddToCart, storeConfig
   return (
     <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" id="product-grid-view">
       
+      {/* Dynamic Brand Intro Header Panel */}
+      <div className="flex flex-col items-center justify-center text-center py-4 sm:py-6 mb-4 max-w-3xl mx-auto space-y-3" id="enlight-brand-introduction">
+        <EnlightLogo size="lg" showText={false} className="animate-[fade-in_0.8s_ease-out] drop-shadow-md hover:scale-105 transition-transform duration-500 ease-out" />
+        <div className="flex flex-col items-center mt-2">
+          <span className="font-serif italic text-stone-500 text-xs sm:text-sm tracking-wide">Where Fragrance Meets Luxury</span>
+          <h1 className="font-serif text-lg sm:text-2xl tracking-[0.2em] text-amber-950 font-bold uppercase mt-1">ENLIGHT CANDLES</h1>
+          <div className="w-12 h-[1px] bg-amber-800/20 mt-2"></div>
+        </div>
+      </div>
+
       {/* Banner Carousel slideshow on top if templates/banners exist */}
       {banners.length > 0 && (
         <div className="w-full rounded-3xl overflow-hidden shadow-md border border-stone-200/60 relative h-[180px] sm:h-[300px] mb-8 bg-stone-100" id="homepage-scrolling-carousel">
@@ -116,8 +127,8 @@ export default function ProductGrid({ user, onNavigate, onAddToCart, storeConfig
               />
               {/* Soft overlay */}
               <div className="absolute inset-0 bg-stone-900/15 flex flex-col justify-end p-5 sm:p-10 text-white select-none">
-                <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-widest bg-amber-800/80 text-white/95 border border-amber-700/50 px-3 py-1 rounded-full w-fit mb-2 max-w-full truncate block" title={storeConfig?.siteName || "AURA"}>
-                  Campaign Announcement from {storeConfig?.siteName || "AURA"}
+                <span className="text-[9px] sm:text-[10px] uppercase font-mono tracking-widest bg-amber-800/80 text-white/95 border border-amber-700/50 px-3 py-1 rounded-full w-fit mb-2 max-w-full truncate block" title={storeConfig?.siteName || "Enlight Candles"}>
+                  Campaign Announcement from {storeConfig?.siteName || "Enlight Candles"}
                 </span>
                 <p className="text-xl sm:text-2.5xl font-serif tracking-tight text-white font-bold drop-shadow-md leading-tight">
                   Hand-Poured Soy Wax Magic

@@ -26,8 +26,11 @@ export default function CartView({
   const [address, setAddress] = useState("");
   const [pinCode, setPinCode] = useState("");
   const [phone, setPhone] = useState("");
+  const [customerInstructions, setCustomerInstructions] = useState("");
   const [checkingOut, setCheckingOut] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Real Razorpay dynamic loader state
 
   // Coupon configuration states
   const [couponCode, setCouponCode] = useState("");
@@ -159,15 +162,18 @@ export default function CartView({
   // Compute subtotal of items
   const itemsSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
+  // Computed per-item individual shipping total
+  const computedShipping = cart.reduce((acc, item) => acc + (item.product.shippingCost || 0) * item.quantity, 0);
+
   // Apply Coupon Computations
   let discountAmt = 0;
   let adjustedSubtotal = itemsSubtotal;
-  let adjustedDelivery = deliveryCharge;
+  let adjustedDelivery = computedShipping;
 
   if (appliedCoupon) {
     if (appliedCoupon.appliesToDelivery) {
       // Free order applies to BOTH product value and delivery surcharge
-      discountAmt = itemsSubtotal + deliveryCharge;
+      discountAmt = itemsSubtotal + computedShipping;
       adjustedSubtotal = 0;
       adjustedDelivery = 0;
     } else {
@@ -188,6 +194,51 @@ export default function CartView({
       return;
     }
     onUpdateQuantity(pId, target);
+  };
+
+  const handleExecuteCheckoutPost = async (payload: any) => {
+    try {
+      setCheckingOut(true);
+      setErrorMsg(null);
+      
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "An error occurred during booking.");
+      }
+
+      // Persist delivery address info locally for future checks
+      localStorage.setItem("aura_last_address", address.trim());
+      localStorage.setItem("aura_last_pincode", payload.pinCode);
+      localStorage.setItem("aura_last_phone", payload.phone);
+
+      setOrderedDetails(data.order);
+      onClearCart(); // Reset local shopping cart state
+
+      // Clear the applied coupon from state and database user profile
+      setAppliedCoupon(null);
+      setCouponCode("");
+      if (user) {
+        try {
+          await fetch("/api/auth/profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ appliedCouponCode: "" })
+          });
+        } catch (err) {
+          console.warn("Could not clear coupon profile value postcheckout:", err);
+        }
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Something went wrong during checkout.");
+    } finally {
+      setCheckingOut(false);
+    }
   };
 
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
@@ -223,47 +274,87 @@ export default function CartView({
     }
 
     setErrorMsg(null);
-    setCheckingOut(true);
 
-    try {
-      // 1. Initialize custom checkout intent or process database booking directly
-      // Map cart details
-      const orderPayload = {
-        items: cart.map(item => ({
-          productId: item.product._id,
-          title: item.product.title,
-          price: item.product.price,
-          quantity: item.quantity
-        })),
-        address: address.trim(),
-        pinCode: cleanPin,
-        phone: cleanPhone,
-        couponCode: appliedCoupon ? appliedCoupon.code : undefined
-      };
+    const payload: any = {
+      items: cart.map(item => ({
+        productId: item.product._id,
+        title: item.product.title,
+        price: item.product.price,
+        quantity: item.quantity
+      })),
+      address: address.trim(),
+      pinCode: cleanPin,
+      phone: cleanPhone,
+      couponCode: appliedCoupon ? appliedCoupon.code : undefined,
+      customerInstructions: customerInstructions.trim() || undefined
+    };
 
-      // Checkout via endpoint
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderPayload)
-      });
+    // If there is an active grand total, open real Razorpay checkout pop-up session
+    if (grandTotal > 0) {
+      setCheckingOut(true);
+      setErrorMsg(null);
+      try {
+        const intentRes = await fetch("/api/orders/checkout-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ totalAmount: grandTotal })
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "An error occurred during booking.");
+        const intentData = await intentRes.json();
+        if (!intentRes.ok) {
+          throw new Error(intentData.error || "Failed to initialize Razorpay payment session.");
+        }
+
+        const { order_id, amount, currency, keyId } = intentData;
+
+        const options = {
+          key: keyId,
+          amount: amount,
+          currency: currency,
+          name: "Enlight Candles",
+          description: "Atelier Handcrafted Luxury Soy Candles",
+          image: "/images/logo.png",
+          order_id: order_id,
+          handler: async function (response: any) {
+            const finalPayload = {
+              ...payload,
+              paymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+              paymentStatus: "Paid"
+            };
+            await handleExecuteCheckoutPost(finalPayload);
+          },
+          prefill: {
+            name: user.email ? user.email.split("@")[0] : "Luxury Patron",
+            email: user?.email,
+            contact: cleanPhone
+          },
+          theme: {
+            color: "#1C120C"
+          },
+          modal: {
+            ondismiss: function () {
+              setCheckingOut(false);
+            }
+          }
+        };
+
+        const rzpWindow = new (window as any).Razorpay(options);
+        rzpWindow.on("payment.failed", function (response: any) {
+          setErrorMsg(`Payment failed: ${response.error.description || "Authorization canceled or declined by bank."}`);
+          setCheckingOut(false);
+        });
+
+        rzpWindow.open();
+
+      } catch (err: any) {
+        setErrorMsg(err.message || "Something went wrong initializing Checkout payment.");
+        setCheckingOut(false);
       }
-
-      // Persist delivery address info locally for future checks
-      localStorage.setItem("aura_last_address", address.trim());
-      localStorage.setItem("aura_last_pincode", cleanPin);
-      localStorage.setItem("aura_last_phone", cleanPhone);
-
-      setOrderedDetails(data.order);
-      onClearCart(); // Reset local shopping cart state
-    } catch (err: any) {
-      setErrorMsg(err.message || "Something went wrong during checkout.");
-    } finally {
-      setCheckingOut(false);
+    } else {
+      // Free order checkout immediately (fully covered by first order coupons, etc.)
+      await handleExecuteCheckoutPost(payload);
     }
   };
 
@@ -416,7 +507,13 @@ export default function CartView({
                           <div>
                             <h4 className="font-serif text-sm font-bold text-stone-900">{item.product.title}</h4>
                             <p className="text-[11px] text-stone-500 italic mt-0.5 max-w-sm line-clamp-1">{item.product.description}</p>
-                            <p className="text-xs font-mono text-amber-950 font-bold mt-1">₹{item.product.price.toLocaleString("en-IN")} each</p>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-[11px] font-mono">
+                              <span className="text-amber-950 font-bold">₹{item.product.price.toLocaleString("en-IN")} ea</span>
+                              <span className="text-stone-300">|</span>
+                              <span className="text-stone-550 text-stone-500 font-medium bg-stone-100 px-1.5 py-0.5 rounded">
+                                Shipping: ₹{(item.product.shippingCost || 0).toLocaleString("en-IN")} ea
+                              </span>
+                            </div>
                           </div>
                         </div>
 
@@ -574,6 +671,21 @@ export default function CartView({
                     </div>
                   </div>
 
+                  {/* Customer Instructions */}
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-stone-400 mb-1 tracking-wider">
+                      Special Delivery Instructions (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Ring bell only once, leave at door, call before delivery"
+                      value={customerInstructions}
+                      onChange={(e) => setCustomerInstructions(e.target.value)}
+                      className="w-full bg-white/60 border border-stone-300/50 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-700 text-xs text-stone-900 rounded-xl py-2 px-3 placeholder:text-stone-400 font-sans transition-all resize-none"
+                      id="checkout-field-instructions"
+                    />
+                  </div>
+
                   {/* Bill computations list */}
                   <div className="border-t border-stone-200/60 pt-4 space-y-2.5 text-xs">
                     <div className="flex justify-between text-stone-600">
@@ -590,9 +702,9 @@ export default function CartView({
                       <span>Atelier Shipping Charge:</span>
                       <span className="font-mono font-medium">
                         {appliedCoupon && appliedCoupon.appliesToDelivery ? (
-                          <span className="line-through text-stone-400 mr-1">₹{deliveryCharge.toLocaleString("en-IN")}</span>
+                          <span className="line-through text-stone-400 mr-1">₹{computedShipping.toLocaleString("en-IN")}</span>
                         ) : (
-                          `₹${deliveryCharge.toLocaleString("en-IN")}`
+                          `₹${computedShipping.toLocaleString("en-IN")}`
                         )}
                         {appliedCoupon && appliedCoupon.appliesToDelivery && <span className="text-emerald-700 font-bold ml-1">Free!</span>}
                       </span>
@@ -638,7 +750,7 @@ export default function CartView({
                   )}
                 </form>
 
-                <div className="text-[10px] text-stone-500 font-sans leading-relaxed text-center" id="cart-simulation-disclaimer">
+                <div className="text-[10px] text-stone-550 text-stone-500 font-sans leading-relaxed text-center" id="cart-simulation-disclaimer">
                   ☘️ Aura Soy Candles are formulated and poured organically. Complete your checkout to trigger transaction booking and instant stock dispatch.
                 </div>
               </div>
@@ -647,6 +759,8 @@ export default function CartView({
           </div>
         )}
       </AnimatePresence>
+
+
 
     </div>
   );

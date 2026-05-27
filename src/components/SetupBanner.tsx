@@ -36,8 +36,8 @@ export default function SetupBanner({ status, onRefresh }: SetupBannerProps) {
                 {failedToConnect 
                   ? "❌ MongoDB Atlas Connection Failed (IP Whitelist Issue)" 
                   : !mongooseConnected 
-                  ? "✨ Aura Candles High-Fidelity Demo Mode Active" 
-                  : "🚀 Aura Candles Fully Connected"}
+                  ? "✨ Enlight Candles High-Fidelity Demo Mode Active" 
+                  : "🚀 Enlight Candles Fully Connected"}
               </p>
               <p className="text-xs text-stone-300 font-sans mt-0.5 max-w-3xl leading-relaxed">
                 {failedToConnect ? (

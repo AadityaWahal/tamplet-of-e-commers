@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { User } from "../types";
 import { LogIn, UserPlus, Mail, Lock, ShieldAlert, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { motion } from "motion/react";
+import EnlightLogo from "./EnlightLogo";
 
 interface AuthFormProps {
   onAuthSuccess: (user: User) => void;
@@ -49,7 +50,7 @@ export default function AuthForm({ onAuthSuccess, onNavigate }: AuthFormProps) {
         if (data.token) {
           localStorage.setItem("aura_jwt_token", data.token);
         }
-        setSuccessMsg(isLogin ? "Aura authorization accepted!" : "Account instantiated successfully!");
+        setSuccessMsg(isLogin ? "Enlight Candles access authorized!" : "Account instantiated successfully!");
         setTimeout(() => {
           onAuthSuccess(data.user);
           onNavigate(data.user.role === "admin" ? "/admin/dashboard" : "/");
@@ -104,13 +105,16 @@ export default function AuthForm({ onAuthSuccess, onNavigate }: AuthFormProps) {
         </div>
 
         {/* Brand visual header */}
-        <div className="text-center space-y-1 pt-2">
-          <h2 className="font-serif text-2xl font-bold text-stone-900 tracking-tight">
-            {isLogin ? "Sign In to Aura" : "Join the Candle Craft"}
-          </h2>
-          <p className="text-xs text-stone-600 font-sans tracking-wide">
-            {isLogin ? "Welcome back. Access your premium burning library." : "Instantiate your account credentials to buy & manage."}
-          </p>
+        <div className="flex flex-col items-center justify-center space-y-3 pt-1">
+          <EnlightLogo size="md" showText={false} className="animate-pulse" />
+          <div className="text-center space-y-1">
+            <h2 className="font-serif text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
+              {isLogin ? "Enter Enlight Candles" : "Join the Candle Craft"}
+            </h2>
+            <p className="text-xs text-stone-500 font-sans tracking-wide">
+              {isLogin ? "Welcome back to candlelit comfort & luxury." : "Instantiate your brand credentials to buy & manage."}
+            </p>
+          </div>
         </div>
 
         {errorMsg && (

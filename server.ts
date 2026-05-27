@@ -129,7 +129,8 @@ const ProductSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   imageUrl: { type: String, required: true },
   stock: { type: Number, default: 10 },
-  category: { type: String, default: "General" }
+  category: { type: String, default: "General" },
+  shippingCost: { type: Number, default: 0 }
 });
 
 const OrderSchema = new mongoose.Schema({
@@ -139,7 +140,8 @@ const OrderSchema = new mongoose.Schema({
       productId: { type: String },
       title: { type: String, required: true },
       price: { type: Number, required: true },
-      quantity: { type: Number, required: true }
+      quantity: { type: Number, required: true },
+      shippingCost: { type: Number, default: 0 }
     }
   ],
   address: { type: String, required: true },
@@ -149,7 +151,11 @@ const OrderSchema = new mongoose.Schema({
   totalAmount: { type: Number, required: true },
   paymentStatus: { type: String, default: "Paid" },
   orderDate: { type: Date, default: Date.now },
-  remark: { type: String, default: "Yet to Confirm" }
+  remark: { type: String, default: "Yet to Confirm" },
+  customerInstructions: { type: String, default: "" },
+  paymentId: { type: String, default: "" },
+  razorpayOrderId: { type: String, default: "" },
+  razorpaySignature: { type: String, default: "" }
 });
 
 const DeliveryConfigSchema = new mongoose.Schema({
@@ -168,9 +174,10 @@ const CouponSchema = new mongoose.Schema({
 });
 
 const StoreConfigSchema = new mongoose.Schema({
-  siteName: { type: String, default: "Aura" },
+  siteName: { type: String, default: "Enlight Candles" },
   logoUrl: { type: String, default: "" },
-  banners: { type: [String], default: [] }
+  banners: { type: [String], default: [] },
+  supportPhone: { type: String, default: "+91 98765 43210" }
 });
 
 // Access existing compilation models or create new ones typed as any to bypass query strictness
@@ -206,6 +213,7 @@ interface IDemoProduct {
   imageUrl: string;
   stock: number;
   category?: string;
+  shippingCost?: number;
 }
 
 interface IDemoOrderItem {
@@ -213,6 +221,7 @@ interface IDemoOrderItem {
   title: string;
   price: number;
   quantity: number;
+  shippingCost?: number;
 }
 
 interface IDemoOrder {
@@ -275,7 +284,8 @@ const memoryProducts: IDemoProduct[] = [
     price: 850,
     imageUrl: "https://images.unsplash.com/photo-1601924582970-9238bcb49d18?auto=format&fit=crop&q=80&w=600",
     stock: 12,
-    category: "Classic"
+    category: "Classic",
+    shippingCost: 20
   },
   {
     _id: "prod_2",
@@ -284,7 +294,8 @@ const memoryProducts: IDemoProduct[] = [
     price: 950,
     imageUrl: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=600",
     stock: 8,
-    category: "Warm"
+    category: "Warm",
+    shippingCost: 45
   },
   {
     _id: "prod_3",
@@ -293,7 +304,8 @@ const memoryProducts: IDemoProduct[] = [
     price: 790,
     imageUrl: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600",
     stock: 15,
-    category: "Floral"
+    category: "Floral",
+    shippingCost: 20
   },
   {
     _id: "prod_4",
@@ -302,7 +314,8 @@ const memoryProducts: IDemoProduct[] = [
     price: 1150,
     imageUrl: "https://images.unsplash.com/photo-1596435764265-7281c7e145ae?auto=format&fit=crop&q=80&w=600",
     stock: 6,
-    category: "Woody"
+    category: "Woody",
+    shippingCost: 50
   }
 ];
 
@@ -313,13 +326,14 @@ const memoryCoupons: IDemoCoupon[] = [
 const memoryCategories: string[] = ["Classic", "Warm", "Floral", "Woody"];
 
 let memoryStoreConfig = {
-  siteName: "AURA",
-  logoUrl: "",
+  siteName: "Enlight Candles",
+  logoUrl: "/uploads/logo_1779874885414.png",
   banners: [
     "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&q=80&w=1200",
     "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=1200",
     "https://images.unsplash.com/photo-1596435764253-6535f2d74bb3?auto=format&fit=crop&q=80&w=1200"
-  ]
+  ],
+  supportPhone: "+91 98765 43210"
 };
 
 // Seed products if MongoDB starts fresh
@@ -766,7 +780,7 @@ app.get("/api/products", async (req, res) => {
 // 6. Admin upload novel custom products
 app.post("/api/admin/products", verifyAdmin, async (req, res) => {
   try {
-    const { title, description, price, imageUrl, stock, category } = req.body;
+    const { title, description, price, imageUrl, stock, category, shippingCost } = req.body;
     if (!title || !description || price === undefined || !imageUrl) {
       return res.status(400).json({ error: "Invalid product parameters. Complete all required fields." });
     }
@@ -774,6 +788,7 @@ app.post("/api/admin/products", verifyAdmin, async (req, res) => {
     const priceNum = Number(price);
     const stockNum = stock !== undefined ? Number(stock) : 10;
     const catStr = category || "Classic";
+    const shippingCostNum = shippingCost !== undefined ? Number(shippingCost) : 0;
 
     if (isNaN(priceNum) || priceNum <= 0) {
       return res.status(400).json({ error: "Price must be a positive number." });
@@ -786,7 +801,8 @@ app.post("/api/admin/products", verifyAdmin, async (req, res) => {
         price: priceNum,
         imageUrl,
         stock: stockNum,
-        category: catStr
+        category: catStr,
+        shippingCost: shippingCostNum
       });
       await newProd.save();
       return res.status(201).json({ success: true, product: newProd });
@@ -798,7 +814,8 @@ app.post("/api/admin/products", verifyAdmin, async (req, res) => {
         price: priceNum,
         imageUrl,
         stock: stockNum,
-        category: catStr
+        category: catStr,
+        shippingCost: shippingCostNum
       };
       memoryProducts.push(newMemProd);
       return res.status(201).json({ success: true, product: newMemProd });
@@ -813,7 +830,7 @@ app.post("/api/admin/products", verifyAdmin, async (req, res) => {
 app.put("/api/admin/products/:id", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, price, imageUrl, stock, category } = req.body;
+    const { title, description, price, imageUrl, stock, category, shippingCost } = req.body;
     if (!title || !description || price === undefined || !imageUrl) {
       return res.status(400).json({ error: "Invalid product parameters. Complete all required fields." });
     }
@@ -821,6 +838,7 @@ app.put("/api/admin/products/:id", verifyAdmin, async (req, res) => {
     const priceNum = Number(price);
     const stockNum = stock !== undefined ? Number(stock) : 10;
     const catStr = category || "Classic";
+    const shippingCostNum = shippingCost !== undefined ? Number(shippingCost) : 0;
 
     if (isNaN(priceNum) || priceNum <= 0) {
       return res.status(400).json({ error: "Price must be a positive number." });
@@ -829,7 +847,7 @@ app.put("/api/admin/products/:id", verifyAdmin, async (req, res) => {
     if (mongooseConnected) {
       const updatedProd = await Product.findByIdAndUpdate(
         id,
-        { title, description, price: priceNum, imageUrl, stock: stockNum, category: catStr },
+        { title, description, price: priceNum, imageUrl, stock: stockNum, category: catStr, shippingCost: shippingCostNum },
         { new: true }
       );
       if (!updatedProd) {
@@ -848,7 +866,8 @@ app.put("/api/admin/products/:id", verifyAdmin, async (req, res) => {
         price: priceNum,
         imageUrl,
         stock: stockNum,
-        category: catStr
+        category: catStr,
+        shippingCost: shippingCostNum
       };
       return res.json({ success: true, product: memoryProducts[idx] });
     }
@@ -1072,9 +1091,21 @@ app.get("/api/store-config", async (req, res) => {
       if (!conf) {
         conf = await StoreConfig.create(memoryStoreConfig);
       }
-      return res.json({ success: true, siteName: conf.siteName, logoUrl: conf.logoUrl, banners: conf.banners });
+      return res.json({ 
+        success: true, 
+        siteName: conf.siteName, 
+        logoUrl: conf.logoUrl, 
+        banners: conf.banners,
+        supportPhone: conf.supportPhone || "+91 98765 43210"
+      });
     } else {
-      return res.json({ success: true, siteName: memoryStoreConfig.siteName, logoUrl: memoryStoreConfig.logoUrl, banners: memoryStoreConfig.banners });
+      return res.json({ 
+        success: true, 
+        siteName: memoryStoreConfig.siteName, 
+        logoUrl: memoryStoreConfig.logoUrl, 
+        banners: memoryStoreConfig.banners,
+        supportPhone: memoryStoreConfig.supportPhone || "+91 98765 43210"
+      });
     }
   } catch (err: any) {
     return res.status(500).json({ error: "Failed to retrieve storefront settings: " + err.message });
@@ -1084,12 +1115,13 @@ app.get("/api/store-config", async (req, res) => {
 // 9c. Administrator POST to update dynamic branding and sliders (Administrative Only)
 app.post("/api/admin/store-config", verifyAdmin, async (req, res) => {
   try {
-    const { siteName, logoUrl, banners } = req.body;
+    const { siteName, logoUrl, banners, supportPhone } = req.body;
     if (!siteName || !siteName.trim()) {
       return res.status(400).json({ error: "Website dynamic name cannot be blank." });
     }
 
     const cleanBanners = Array.isArray(banners) ? banners.map((b: string) => b.trim()).filter((b: string) => !!b) : [];
+    const cleanSupportPhone = (supportPhone || "+91 98765 43210").trim();
 
     if (mongooseConnected) {
       let conf = await StoreConfig.findOne({});
@@ -1097,28 +1129,44 @@ app.post("/api/admin/store-config", verifyAdmin, async (req, res) => {
         conf = new StoreConfig({
           siteName: siteName.trim(),
           logoUrl: (logoUrl || "").trim(),
-          banners: cleanBanners
+          banners: cleanBanners,
+          supportPhone: cleanSupportPhone
         });
       } else {
         conf.siteName = siteName.trim();
         conf.logoUrl = (logoUrl || "").trim();
         conf.banners = cleanBanners;
+        conf.supportPhone = cleanSupportPhone;
       }
       await conf.save();
       // Also sync back to memoryStoreConfig
       memoryStoreConfig = {
         siteName: conf.siteName,
         logoUrl: conf.logoUrl,
-        banners: conf.banners
+        banners: conf.banners,
+        supportPhone: conf.supportPhone
       };
-      return res.json({ success: true, siteName: conf.siteName, logoUrl: conf.logoUrl, banners: conf.banners });
+      return res.json({ 
+        success: true, 
+        siteName: conf.siteName, 
+        logoUrl: conf.logoUrl, 
+        banners: conf.banners,
+        supportPhone: conf.supportPhone
+      });
     } else {
       memoryStoreConfig = {
         siteName: siteName.trim(),
         logoUrl: (logoUrl || "").trim(),
-        banners: cleanBanners
+        banners: cleanBanners,
+        supportPhone: cleanSupportPhone
       };
-      return res.json({ success: true, siteName: memoryStoreConfig.siteName, logoUrl: memoryStoreConfig.logoUrl, banners: memoryStoreConfig.banners });
+      return res.json({ 
+        success: true, 
+        siteName: memoryStoreConfig.siteName, 
+        logoUrl: memoryStoreConfig.logoUrl, 
+        banners: memoryStoreConfig.banners,
+        supportPhone: memoryStoreConfig.supportPhone
+      });
     }
   } catch (err: any) {
     return res.status(500).json({ error: "Failed to set up promotional branding configuration: " + err.message });
@@ -1128,7 +1176,7 @@ app.post("/api/admin/store-config", verifyAdmin, async (req, res) => {
 // 10. Process checkout/placement request of Cart Orders
 app.post("/api/orders", async (req, res) => {
   try {
-    const { items, address, pinCode, phone, couponCode } = req.body;
+    const { items, address, pinCode, phone, couponCode, customerInstructions, paymentId, razorpayOrderId, razorpaySignature } = req.body;
     const activeSession = getCurrentUser(req);
     if (!activeSession) {
       return res.status(401).json({ error: "Authentication is required to place and track orders." });
@@ -1165,6 +1213,7 @@ app.post("/api/orders", async (req, res) => {
     }
 
     let calculatedItemTotal = 0;
+    let computedShippingTotal = 0;
     const validatedItems: any[] = [];
 
     for (const item of items) {
@@ -1184,6 +1233,8 @@ app.post("/api/orders", async (req, res) => {
       }
 
       calculatedItemTotal += targetProduct.price * qty;
+      const unitShipping = targetProduct.shippingCost !== undefined ? Number(targetProduct.shippingCost) : 0;
+      computedShippingTotal += unitShipping * qty;
 
       // Decrement stock gracefully
       const originalStock = targetProduct.stock;
@@ -1196,6 +1247,7 @@ app.post("/api/orders", async (req, res) => {
         productId: targetProduct._id.toString(),
         title: targetProduct.title,
         price: targetProduct.price,
+        shippingCost: unitShipping,
         quantity: qty
       });
     }
@@ -1203,7 +1255,7 @@ app.post("/api/orders", async (req, res) => {
     // Calculate dynamic discount with specified Coupon
     let discountPercent = appliedCoupon ? appliedCoupon.discountPercent : 0;
     let finalItemsTotal = calculatedItemTotal;
-    let finalDeliveryCharge = activeCharge;
+    let finalDeliveryCharge = computedShippingTotal;
 
     if (appliedCoupon) {
       if (appliedCoupon.appliesToDelivery) {
@@ -1231,7 +1283,11 @@ app.post("/api/orders", async (req, res) => {
         totalAmount,
         paymentStatus: finalPaymentStatus,
         orderDate: new Date(),
-        remark: "Yet to Confirm"
+        remark: "Yet to Confirm",
+        customerInstructions: (customerInstructions || "").trim(),
+        paymentId: paymentId || "",
+        razorpayOrderId: razorpayOrderId || "",
+        razorpaySignature: razorpaySignature || ""
       });
       await freshOrder.save();
 
@@ -1259,7 +1315,11 @@ app.post("/api/orders", async (req, res) => {
         totalAmount,
         paymentStatus: finalPaymentStatus,
         orderDate: new Date(),
-        remark: "Yet to Confirm"
+        remark: "Yet to Confirm",
+        customerInstructions: (customerInstructions || "").trim(),
+        paymentId: paymentId || "",
+        razorpayOrderId: razorpayOrderId || "",
+        razorpaySignature: razorpaySignature || ""
       };
       memoryOrders.unshift(freshMemOrder);
 
@@ -1463,6 +1523,29 @@ app.post("/api/admin/coupons", verifyAdmin, async (req, res) => {
   }
 });
 
+app.delete("/api/admin/coupons/:id", verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (mongooseConnected) {
+      const deletedCoupon = await Coupon.findByIdAndDelete(id);
+      if (!deletedCoupon) {
+        return res.status(404).json({ error: "Coupon not found." });
+      }
+      return res.json({ success: true, message: "Coupon deleted successfully." });
+    } else {
+      const idx = memoryCoupons.findIndex(c => c._id === id);
+      if (idx === -1) {
+        return res.status(404).json({ error: "Coupon not found in memory database." });
+      }
+      memoryCoupons.splice(idx, 1);
+      return res.json({ success: true, message: "Coupon deleted successfully from memory." });
+    }
+  } catch (err: any) {
+    console.error("Admin coupon deletion failure:", err);
+    return res.status(500).json({ error: "System failure deleting coupon: " + err.message });
+  }
+});
+
 app.post("/api/apply-coupon", async (req, res) => {
   try {
     const { code } = req.body;
@@ -1495,9 +1578,9 @@ app.put("/api/admin/orders/:id/remark", verifyAdmin, async (req, res) => {
     const { id } = req.params;
     const { remark } = req.body;
 
-    const validRemarks = ["Yet to Confirm", "Confirmed", "Shipped", "Delivered"];
+    const validRemarks = ["Yet to Confirm", "Confirmed", "Shipped", "Delivered", "Failed"];
     if (!remark || !validRemarks.includes(remark)) {
-      return res.status(400).json({ error: "Invalid remark. Must be one of: Confirmed, Shipped, Delivered, Yet to Confirm" });
+      return res.status(400).json({ error: "Invalid remark. Must be one of: Confirmed, Shipped, Delivered, Yet to Confirm, Failed" });
     }
 
     if (mongooseConnected) {

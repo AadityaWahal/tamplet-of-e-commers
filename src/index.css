@@ -1,16 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", Georgia, serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-signature: "Alex Brush", "Cormorant Garamond", cursive;
 }
 
 body {
-  background: linear-gradient(135deg, #f5f5f4 0%, #fff1f2 40%, #fff7ed 100%);
+  background: linear-gradient(135deg, #fdfcf9 0%, #FAF0E4 50%, #E8D5C4 100%);
   background-attachment: fixed;
-  color: #2b2823;
+  color: #3C2E24;
   font-family: var(--font-sans);
   min-height: 100vh;
 }

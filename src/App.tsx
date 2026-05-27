@@ -7,6 +7,7 @@ import AuthForm from "./components/AuthForm";
 import AdminForm from "./components/AdminForm";
 import CartView from "./components/CartView";
 import MyOrdersView from "./components/MyOrdersView";
+import EnlightLogo from "./components/EnlightLogo";
 import { Sparkles, Heart, RefreshCw, Flame, Mail, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -240,7 +241,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50 select-text" id="aura-candles-application-root">
+    <div className="min-h-screen flex flex-col bg-transparent select-text" id="enlight-candles-application-root">
       
       {/* Main sticky header navigation menu */}
       <Navbar 
@@ -253,7 +254,7 @@ export default function App() {
       />
 
       {/* Dynamic Main Body content views */}
-      <main className="flex-grow max-w-7xl w-full mx-auto" id="aura-candle-main-viewport">
+      <main className="flex-grow max-w-7xl w-full mx-auto" id="enlight-candle-main-viewport">
         <AnimatePresence mode="wait">
           {currentPath === "/" && (
             <motion.div
@@ -340,6 +341,7 @@ export default function App() {
               <MyOrdersView 
                 user={user} 
                 onNavigate={navigateTo} 
+                storeConfig={storeConfig}
               />
             </motion.div>
           )}
@@ -347,24 +349,22 @@ export default function App() {
       </main>
 
       {/* Footer layout */}
-      <footer className="bg-stone-900 border-t border-stone-800 text-stone-500 py-16" id="app-brand-footer">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10">
+      <footer className="bg-[#1C120C] border-t border-stone-800/40 text-stone-400 py-16 animate-[fade-in_1s_ease-out]" id="app-brand-footer">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-5 gap-10">
           
           {/* Brand Info */}
           <div className="space-y-4 md:col-span-2">
-            <div className="flex items-center space-x-2.5 text-stone-100 min-w-0">
-              <div className="p-1.5 bg-stone-800 text-amber-500 rounded shrink-0">
-                <Flame className="w-4 h-4" />
-              </div>
-              <span className="font-serif text-base sm:text-lg tracking-widest text-white uppercase font-bold truncate max-w-[250px] sm:max-w-[400px]" title={storeConfig?.siteName || "AURA CANDLES"}>
-                {storeConfig?.siteName ? `${storeConfig.siteName} CANDLES` : "AURA CANDLES"}
+            <div className="flex items-center space-x-3.5 text-stone-100 min-w-0">
+              <EnlightLogo size="xs" showText={false} className="shrink-0 scale-125" />
+              <span className="font-serif text-base sm:text-lg tracking-widest text-amber-50/90 uppercase font-bold truncate max-w-[250px] sm:max-w-[400px]" title={storeConfig?.siteName || "Enlight Candles"}>
+                {storeConfig?.siteName ? `${storeConfig.siteName}` : "Enlight Candles"}
               </span>
             </div>
-            <p className="text-xs text-stone-400 font-serif leading-relaxed max-w-sm">
-              Luxury hand-crafted soy candles. Biodegradable, vegan, toxin-free wax poured meticulously to deliver maximum fragrance dispersion and clean candle burn profiles.
+            <p className="text-xs text-stone-350 text-stone-300 font-serif leading-relaxed max-w-sm">
+              Premium hand-cut wick luxurious soy vessels. Non-toxic, vegan-certified, organic wax blends crafted with pure botanical extracts to manifest refined aromatic luxury.
             </p>
-            <p className="text-[10px] text-stone-600 font-mono break-words max-w-sm">
-              © {new Date().getFullYear()} {storeConfig?.siteName || "Aura"} Candle Atelier Co. All sovereign rights reserved.
+            <p className="text-[10px] text-stone-550 text-stone-500 font-mono break-words max-w-sm">
+              © {new Date().getFullYear()} {storeConfig?.siteName || "Enlight Candles"} Candle Atelier Co. All sovereign rights reserved.
             </p>
           </div>
 
@@ -377,6 +377,26 @@ export default function App() {
               <li className="hover:text-amber-500 transition-colors cursor-pointer">Madagascar Vanilla Beans</li>
               <li className="hover:text-amber-500 transition-colors cursor-pointer">French Saffron & Cedar Wood</li>
             </ul>
+          </div>
+
+          {/* Customer Support */}
+          <div className="space-y-3">
+            <h5 className="font-serif text-sm text-stone-300 tracking-wide font-medium">Atelier Support</h5>
+            <div className="space-y-2 text-xs text-stone-400">
+              <p className="leading-relaxed text-stone-400">
+                Facing payment troubles or order issues? Get in touch with our live concierge desk.
+              </p>
+              <a
+                href={`tel:${storeConfig?.supportPhone || "+919876543210"}`}
+                className="mt-2 inline-flex items-center space-x-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-sans font-bold text-xs py-2 px-4 rounded-xl shadow-md transition-all uppercase tracking-wider"
+                id="footer-support-dialer-link"
+              >
+                <span>📞 Call Concierge</span>
+              </a>
+              <p className="text-[10px] text-stone-550 font-mono mt-1">
+                {storeConfig?.supportPhone || "+91 98765 43210"}
+              </p>
+            </div>
           </div>
 
           {/* Secure transactions info */}

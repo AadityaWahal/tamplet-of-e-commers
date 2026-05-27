@@ -6,6 +6,7 @@ export interface Product {
   imageUrl: string;
   stock: number;
   category?: string;
+  shippingCost?: number;
 }
 
 export interface User {
@@ -38,6 +39,7 @@ export interface OrderItem {
   title: string;
   price: number;
   quantity: number;
+  shippingCost?: number;
 }
 
 export interface Order {
@@ -52,6 +54,7 @@ export interface Order {
   paymentStatus: string;
   orderDate: string;
   remark?: string;
+  customerInstructions?: string;
 }
 
 export interface Coupon {
@@ -66,5 +69,6 @@ export interface StoreConfig {
   siteName: string;
   logoUrl: string;
   banners: string[];
+  supportPhone?: string;
 }
 

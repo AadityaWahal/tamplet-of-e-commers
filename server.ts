@@ -279,42 +279,82 @@ let memoryDeliveryCharge = 120;
 const memoryProducts: IDemoProduct[] = [
   {
     _id: "prod_1",
-    title: "Santal Violet & Sandalwood",
-    description: "Relaxing blend of French lavender infused with elements of warm earthy oud wood, rich santal, and golden amber.",
-    price: 850,
-    imageUrl: "https://images.unsplash.com/photo-1601924582970-9238bcb49d18?auto=format&fit=crop&q=80&w=600",
-    stock: 12,
+    title: "Calm Lavender",
+    description: "Relaxing blend of French lavender fields, organic wild chamomile, and pure essential extracts.",
+    price: 620,
+    imageUrl: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=600",
+    stock: 15,
     category: "Classic",
-    shippingCost: 20
+    shippingCost: 40
   },
   {
     _id: "prod_2",
-    title: "Vanilla Beans & Charcoal Oak",
-    description: "A rich, sweet scent of warm Madagascar vanilla combined with charred oak, rich bourbon, and deep musk tones.",
-    price: 950,
-    imageUrl: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=600",
-    stock: 8,
+    title: "Citrus Blossom",
+    description: "Energizing citrus aromatherapy infused with fresh orange peel, sliced grapefruit, and natural botanical elements.",
+    price: 920,
+    imageUrl: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?auto=format&fit=crop&q=80&w=600",
+    stock: 12,
     category: "Warm",
-    shippingCost: 45
+    shippingCost: 40
   },
   {
     _id: "prod_3",
-    title: "Tuscan Fig & Herbal Moss",
-    description: "Invigorating aromatherapy crafted with freshly cut eucalyptus stalks blended with premium steep herbal white tea leaves.",
-    price: 790,
-    imageUrl: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600",
-    stock: 15,
+    title: "Warilla & Clozy",
+    description: "Madagascar vanilla pods infused with sweet warm cinnamon bark and rustic aromatic winter cloves.",
+    price: 2380,
+    imageUrl: "https://images.unsplash.com/photo-1596435764265-7281c7e145ae?auto=format&fit=crop&q=80&w=600",
+    stock: 10,
     category: "Floral",
-    shippingCost: 20
+    shippingCost: 50
   },
   {
     _id: "prod_4",
-    title: "Cove Cedar & Saffron Amber",
-    description: "Seductive autumn wood notes blended with crushed hand-selected cardamom pods, rich cedar bark, and amber resin.",
-    price: 1150,
-    imageUrl: "https://images.unsplash.com/photo-1596435764265-7281c7e145ae?auto=format&fit=crop&q=80&w=600",
-    stock: 6,
+    title: "Herbal & Best Woodley",
+    description: "Clean fresh mountain foliage layered with handpressed sage leaves, golden forest bark, and wood musk.",
+    price: 1450,
+    imageUrl: "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=600",
+    stock: 8,
     category: "Woody",
+    shippingCost: 50
+  },
+  {
+    _id: "prod_5",
+    title: "Amber Oud & Gold Resin",
+    description: "Sophisticated golden resin combined with warm Baltic amber, premium organic oud chunks, and sweet sandalwood shavings.",
+    price: 1890,
+    imageUrl: "https://images.unsplash.com/photo-1572726729207-a78d6feb18d7?auto=format&fit=crop&q=80&w=600",
+    stock: 14,
+    category: "Best Seller",
+    shippingCost: 40
+  },
+  {
+    _id: "prod_6",
+    title: "Eucalyptus & Wild Mint",
+    description: "Invigorating therapy crafted with fresh handpicked eucalyptus branches, organic mint leaves, and therapeutic green crystal salts.",
+    price: 1255,
+    imageUrl: "https://images.unsplash.com/photo-1602872030219-cbf652901994?auto=format&fit=crop&q=80&w=600",
+    stock: 20,
+    category: "Best Seller",
+    shippingCost: 40
+  },
+  {
+    _id: "prod_7",
+    title: "Sovereign Santal & Shea",
+    description: "Elegant blend of rich creamy Santal oil paired wonderfully with lavender, soft shea, and golden incense resin.",
+    price: 2150,
+    imageUrl: "https://images.unsplash.com/photo-1605651202774-7d5731db8e75?auto=format&fit=crop&q=80&w=600",
+    stock: 18,
+    category: "Best Seller",
+    shippingCost: 50
+  },
+  {
+    _id: "prod_8",
+    title: "Charcoal Oak & Vanilla Bean",
+    description: "A premium rich, smoky Madagascar vanilla bean candle infused with charred oak logs and white birch bark flakes.",
+    price: 1950,
+    imageUrl: "https://images.unsplash.com/photo-1547849616-566fb4ec2718?auto=format&fit=crop&q=80&w=600",
+    stock: 11,
+    category: "Best Seller",
     shippingCost: 50
   }
 ];
@@ -323,15 +363,15 @@ const memoryCoupons: IDemoCoupon[] = [
   { _id: "coupon_1", code: "FIRST50", discountPercent: 50, appliesToDelivery: false, isActive: true }
 ];
 
-const memoryCategories: string[] = ["Classic", "Warm", "Floral", "Woody"];
+const memoryCategories: string[] = ["Classic", "Warm", "Floral", "Woody", "Best Seller"];
 
 let memoryStoreConfig = {
   siteName: "Enlight Candles",
   logoUrl: "/uploads/logo_1779874885414.png",
   banners: [
-    "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&q=80&w=1200",
-    "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=1200",
-    "https://images.unsplash.com/photo-1596435764253-6535f2d74bb3?auto=format&fit=crop&q=80&w=1200"
+    "https://images.unsplash.com/photo-1596435764253-6535f2d74bb3?auto=format&fit=crop&q=80&w=1200",
+    "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=1200",
+    "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=1200"
   ],
   supportPhone: "+91 98765 43210"
 };
@@ -339,6 +379,15 @@ let memoryStoreConfig = {
 // Seed products if MongoDB starts fresh
 async function seedProductsIfEmpty() {
   try {
+    const hasOldProducts = await Product.findOne({ title: "Santal Violet & Sandalwood" });
+    const existCount = await Product.countDocuments();
+    
+    // Force drop/update if legacy products exist or count is not 8
+    if (hasOldProducts || (existCount > 0 && existCount !== 8)) {
+      console.log("Found outdated templates or incomplete product list. Re-seeding database catalog...");
+      await Product.deleteMany({});
+    }
+
     const count = await Product.countDocuments();
     if (count === 0) {
       const dbSeeded = memoryProducts.map(p => ({
@@ -353,12 +402,13 @@ async function seedProductsIfEmpty() {
       console.log("Database seeded successfully with initial inventory.");
     }
 
-    // Seed categories
-    const catCount = await Category.countDocuments();
-    if (catCount === 0) {
-      const defaultCats = memoryCategories.map(c => ({ name: c }));
-      await Category.insertMany(defaultCats);
-      console.log("Database seeded with default categories.");
+    // Seed/Sync categories
+    for (const catName of memoryCategories) {
+      const exists = await Category.findOne({ name: catName });
+      if (!exists) {
+        await Category.create({ name: catName });
+        console.log(`Seeded category ${catName} into MongoDB.`);
+      }
     }
 
     // Seed FIRST50 coupon
@@ -378,6 +428,14 @@ async function seedProductsIfEmpty() {
     if (configCount === 0) {
       await StoreConfig.create(memoryStoreConfig);
       console.log("Database seeded with default store configuration.");
+    } else {
+      // Force update to clean banners if outdated banners loaded
+      const existingConfig = await StoreConfig.findOne({});
+      if (existingConfig && existingConfig.banners && existingConfig.banners.includes("https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&q=80&w=1200")) {
+        console.log("Upgrading database StoreConfig to replace glitched banner slide.");
+        existingConfig.banners = memoryStoreConfig.banners;
+        await existingConfig.save();
+      }
     }
   } catch (err: any) {
     console.error("Seeding process failed:", err.message);

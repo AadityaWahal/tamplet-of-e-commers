@@ -40,6 +40,9 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
   const [bannersList, setBannersList] = useState<string[]>(storeConfig?.banners || []);
   const [savingConfig, setSavingConfig] = useState(false);
 
+  // Styled modal deletion confirmation target
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; type: "product" | "coupon"; titleName: string } | null>(null);
+
   useEffect(() => {
     if (storeConfig) {
       setSiteNameInput(storeConfig.siteName || "Enlight Candles");
@@ -351,8 +354,11 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
     }
   };
 
-  const handleDeleteCoupon = async (id: string, code: string) => {
-    if (!window.confirm(`Are you sure you want to delete the promo code "${code}"?`)) return;
+  const handleDeleteCoupon = (id: string, code: string) => {
+    setDeleteConfirmation({ id, type: "coupon", titleName: code });
+  };
+
+  const handleExecuteDeleteCoupon = async (id: string, code: string) => {
     setErrorMsg(null);
     setSuccessMsg(null);
     try {
@@ -367,6 +373,8 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
       fetchCoupons();
     } catch (err: any) {
       setErrorMsg(err.message);
+    } finally {
+      setDeleteConfirmation(null);
     }
   };
 
@@ -608,10 +616,11 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
     setShippingCost("");
   };
 
-  const handleDelete = async (productId: string, titleName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${titleName}" from the laboratory offerings?`)) {
-      return;
-    }
+  const handleDelete = (productId: string, titleName: string) => {
+    setDeleteConfirmation({ id: productId, type: "product", titleName });
+  };
+
+  const handleExecuteDeleteProduct = async (productId: string, titleName: string) => {
     setErrorMsg(null);
     setSuccessMsg(null);
 
@@ -631,6 +640,8 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
       }
     } catch (err: any) {
       setErrorMsg(err.message || "An error occurred while deleting the asset.");
+    } finally {
+      setDeleteConfirmation(null);
     }
   };
 
@@ -1659,6 +1670,49 @@ export default function AdminForm({ user, onNavigate, storeConfig, onRefreshStor
         </div>
 
       </div>
+
+      {/* ⚠️ BEAUTIFUL SECURE DELETE CONFIRMATION OVERLAY (Custom non-blocking Modal) */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4" id="custom-delete-confirmation-dialog">
+          <div className="bg-white border border-stone-200 shadow-2xl rounded-3xl w-full max-w-sm overflow-hidden p-6 space-y-5">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center shrink-0 border border-red-100">
+                <Trash2 className="w-5 h-5 text-red-650" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-serif text-base font-bold text-stone-900">Are you absolute certain?</h4>
+                <p className="text-xs text-stone-500 leading-normal">
+                  You are requested to permanently delete the {deleteConfirmation.type === "product" ? "product item" : "promotional coupon"}:{" "}
+                  <strong className="text-stone-800 break-all">"{deleteConfirmation.titleName}"</strong>. This operation is absolutely irreversible.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmation(null)}
+                className="px-4 py-2 rounded-xl text-xs font-serif font-bold text-stone-550 hover:bg-stone-50 hover:text-stone-800 border border-stone-200 transition-colors cursor-pointer"
+              >
+                No, Keep It
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (deleteConfirmation.type === "product") {
+                    handleExecuteDeleteProduct(deleteConfirmation.id, deleteConfirmation.titleName);
+                  } else {
+                    handleExecuteDeleteCoupon(deleteConfirmation.id, deleteConfirmation.titleName);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-serif font-black bg-red-650 hover:bg-red-700 text-white transition-colors cursor-pointer"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

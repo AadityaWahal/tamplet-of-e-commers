@@ -367,8 +367,9 @@ const memoryCategories: string[] = ["Classic", "Warm", "Floral", "Woody", "Best 
 
 let memoryStoreConfig = {
   siteName: "Enlight Candles",
-  logoUrl: "/uploads/logo_1779874885414.png",
+  logoUrl: "",
   banners: [
+    "/uploads/banner_1779968004200.jpeg",
     "https://images.unsplash.com/photo-1596435764253-6535f2d74bb3?auto=format&fit=crop&q=80&w=1200",
     "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=1200",
     "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=1200"
@@ -380,11 +381,10 @@ let memoryStoreConfig = {
 async function seedProductsIfEmpty() {
   try {
     const hasOldProducts = await Product.findOne({ title: "Santal Violet & Sandalwood" });
-    const existCount = await Product.countDocuments();
     
-    // Force drop/update if legacy products exist or count is not 8
-    if (hasOldProducts || (existCount > 0 && existCount !== 8)) {
-      console.log("Found outdated templates or incomplete product list. Re-seeding database catalog...");
+    // Only force drop if the old glitched default template is found
+    if (hasOldProducts) {
+      console.log("Found outdated templates. Re-seeding database catalog...");
       await Product.deleteMany({});
     }
 
@@ -428,14 +428,6 @@ async function seedProductsIfEmpty() {
     if (configCount === 0) {
       await StoreConfig.create(memoryStoreConfig);
       console.log("Database seeded with default store configuration.");
-    } else {
-      // Force update to clean banners if outdated banners loaded
-      const existingConfig = await StoreConfig.findOne({});
-      if (existingConfig && existingConfig.banners && existingConfig.banners.includes("https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?auto=format&fit=crop&q=80&w=1200")) {
-        console.log("Upgrading database StoreConfig to replace glitched banner slide.");
-        existingConfig.banners = memoryStoreConfig.banners;
-        await existingConfig.save();
-      }
     }
   } catch (err: any) {
     console.error("Seeding process failed:", err.message);

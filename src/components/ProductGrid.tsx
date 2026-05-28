@@ -105,7 +105,7 @@ export default function ProductGrid({ user, onNavigate, onAddToCart, storeConfig
       
       {/* 🌟 LUXURIOUS EDITORIAL SPLIT-HERO SECTION (Mirrors User's Uploaded Image Layout Exactly) */}
       <div 
-        className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#FAF6F0] rounded-[32px] p-6 sm:p-10 lg:p-16 border border-[#B58E71]/15 shadow-sm transition-all relative overflow-hidden" 
+        className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#FAF6F0] rounded-[32px] p-6 sm:p-8 lg:p-10 border border-[#B58E71]/15 shadow-sm transition-all relative overflow-hidden" 
         id="luxury-editorial-split-hero"
       >
         {/* Soft background glow */}
@@ -113,23 +113,23 @@ export default function ProductGrid({ user, onNavigate, onAddToCart, storeConfig
         <div className="absolute -bottom-10 -left-10 w-80 h-80 bg-[#EADCC9]/20 rounded-full blur-3xl pointer-events-none"></div>
 
         {/* Left Side: Elegant typography & Call to Action */}
-        <div className="lg:col-span-6 space-y-6 sm:space-y-8 max-w-xl z-10">
-          <div className="space-y-3">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-6 max-w-xl z-10">
+          <div className="space-y-2">
             <span className="text-[10px] uppercase font-mono tracking-[0.25em] text-[#B58E71] font-bold block">
               Pure Soy Wax • Hand-Poured Artistry
             </span>
-            <h1 className="font-serif xl:text-6xl lg:text-5xl md:text-5xl text-4xl text-[#2E2219] leading-[1.1] font-normal tracking-wide">
+            <h1 className="font-serif xl:text-5xl lg:text-4xl text-3xl text-[#2E2219] leading-[1.1] font-normal tracking-wide">
               Handcrafted <br className="hidden sm:inline" /> Luxury Candles
             </h1>
-            <p className="text-[#5C4D40] text-sm sm:text-base leading-relaxed font-sans max-w-md">
+            <p className="text-[#5C4D40] text-xs sm:text-sm leading-relaxed font-sans max-w-md">
               Elevate your space with natural, artisanal scents. Expertly created in local studios, designed to restore daily calm and serene focus.
             </p>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <button
               onClick={handleScrollToGrid}
-              className="inline-flex items-center justify-center bg-[#C39F85] text-white font-serif font-semibold tracking-[0.16em] text-xs sm:text-sm px-10 py-4 border border-[#B58E71]/20 hover:bg-[#2E2219] transition-all duration-300 shadow-sm uppercase cursor-pointer group"
+              className="inline-flex items-center justify-center bg-[#C39F85] text-white font-serif font-semibold tracking-[0.16em] text-[11px] sm:text-xs px-8 py-3.5 border border-[#B58E71]/20 hover:bg-[#2E2219] transition-all duration-300 shadow-sm uppercase cursor-pointer group"
               id="hero-shop-now-cta"
             >
               <span>Shop Now</span>
@@ -146,7 +146,7 @@ export default function ProductGrid({ user, onNavigate, onAddToCart, storeConfig
 
         {/* Right Side: Showcase visual (with dynamic administrative Carousel backup) */}
         <div className="lg:col-span-6 z-10">
-          <div className="w-full rounded-[24px] overflow-hidden shadow-lg border border-[#B58E71]/20 relative h-[250px] sm:h-[350px] lg:h-[400px] bg-[#FAF7F2]">
+          <div className="w-full rounded-[24px] overflow-hidden shadow-lg border border-[#B58E71]/20 relative h-[180px] sm:h-[250px] lg:h-[300px] bg-[#FAF7F2]">
             {banners.length > 0 ? (
               <AnimatePresence mode="wait">
                 <motion.div
@@ -333,11 +333,14 @@ export default function ProductGrid({ user, onNavigate, onAddToCart, storeConfig
                     {/* Media wrap container with subtle beige canvas structure */}
                     <div className="relative aspect-square overflow-hidden rounded-[14px] bg-[#FAF7F2] shrink-0 border border-[#B58E71]/10">
                       <img 
-                        src={product.imageUrl} 
+                        src={product.imageUrl || "https://images.unsplash.com/photo-1596435764253-6535f2d74bb3?auto=format&fit=crop&q=80&w=600"} 
                         alt={product.title}
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                         id={`candle-image-${product._id}`}
+                        onError={(e) => {
+                          (e.target as any).src = "https://images.unsplash.com/photo-1596435764253-6535f2d74bb3?auto=format&fit=crop&q=80&w=600";
+                        }}
                       />
                       
                       {/* Best Seller Badge */}

@@ -19,15 +19,6 @@ interface NavbarProps {
 export default function Navbar({ user, currentPath, onNavigate, onLogout, cartCount, storeConfig }: NavbarProps) {
   const siteName = storeConfig?.siteName || "Enlight Candles";
   const logoUrl = storeConfig?.logoUrl || localStorage.getItem("aura_logo_storage") || "/uploads/logo_1779874885414.png";
-  const [logoErr, setLogoErr] = React.useState(false);
-
-  React.useEffect(() => {
-    if (logoUrl === "/uploads/logo_1779874885414.png" || !logoUrl) {
-      setLogoErr(true);
-    } else {
-      setLogoErr(false);
-    }
-  }, [logoUrl]);
 
   return (
     <header className="sticky top-4 mx-4 xl:mx-auto max-w-7xl bg-white/40 backdrop-blur-xl border border-white/40 shadow-sm rounded-2xl z-40 transition-all duration-300" id="navbar-header">
@@ -42,19 +33,15 @@ export default function Navbar({ user, currentPath, onNavigate, onLogout, cartCo
             title={siteName}
           >
             <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-stone-200/50 p-0.5 bg-white/90 shrink-0 flex items-center justify-center overflow-hidden">
-              {logoErr ? (
-                <EnlightLogo size="xs" showText={false} className="scale-75 sm:scale-95" />
-              ) : (
-                <img 
-                  src={logoUrl} 
-                  referrerPolicy="no-referrer"
-                  alt={siteName} 
-                  className="h-full w-full object-cover rounded-full"
-                  onError={() => {
-                    setLogoErr(true);
-                  }}
-                />
-              )}
+              <img 
+                src={logoUrl || "/uploads/logo_1779874885414.png"} 
+                referrerPolicy="no-referrer"
+                alt={siteName} 
+                className="h-full w-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.target as any).src = "/uploads/logo_1779874885414.png";
+                }}
+              />
             </div>
             <span className="font-serif text-[11px] sm:text-xs md:text-sm lg:text-base tracking-widest text-amber-950 font-bold uppercase transition-colors group-hover:text-stone-700 truncate">
               {siteName}
